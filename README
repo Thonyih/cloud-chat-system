@@ -1,0 +1,1 @@
+Instant messaging platform built with a microservices architecture: HTML/CSS/JavaScript frontend, Node.js + Express backend services, Socket.io for real-time chat, PostgreSQL per service, Kubernetes deployment, Terraform + Ansible IaC, Prometheus/Grafana monitoring, and GitLab CI/CD with Kaniko, Docker Hub and GCP.  
