@@ -22,3 +22,13 @@
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl
+
+# Secrets
+key.json
+**/key.json
+*.pem
+*.p12
+*.pfx
+*.key
+.env
+.env.*
