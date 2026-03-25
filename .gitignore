@@ -16,3 +16,9 @@
 .TemporaryItems
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
+
+# Terraform binaries
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
