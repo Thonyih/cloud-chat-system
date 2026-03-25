@@ -1,3 +1,9 @@
+# 
+
+![Main Diagram.png](/Users/antoniopalma/Documents/temp/cloud-chat-system/Main%20Diagram.png)
+
+
+
 # Chat Application Deployment Guide
 
 This guide explains how to deploy the chat application on Google Cloud Platform using Terraform and Ansible.
