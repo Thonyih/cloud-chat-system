@@ -1,0 +1,291 @@
+------frontend -------
+
+
+anter@DESKTOP-RRSF36O:/mnt/c/Users/anter/Desktop/IST/1ºY/1ºS/AGISIT/projeto/Application$ ab -n 1000 -c 10 http://35.233.126.7:30843/
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 35.233.126.7 (be patient)
+Completed 100 requests
+Completed 200 requests
+Completed 300 requests
+Completed 400 requests
+Completed 500 requests
+Completed 600 requests
+Completed 700 requests
+Completed 800 requests
+Completed 900 requests
+Completed 1000 requests
+Finished 1000 requests
+
+
+Server Software:        nginx/1.27.5
+Server Hostname:        35.233.126.7
+Server Port:            30843
+
+Document Path:          /
+Document Length:        3980 bytes
+
+Concurrency Level:      10
+Time taken for tests:   8.563 seconds
+Complete requests:      1000
+Failed requests:        0
+Total transferred:      4295000 bytes
+HTML transferred:       3980000 bytes
+Requests per second:    116.78 [#/sec] (mean)
+Time per request:       85.628 [ms] (mean)
+Time per request:       8.563 [ms] (mean, across all concurrent requests)
+Transfer rate:          489.83 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       30   46  92.8     37    1116
+Processing:    31   38   3.7     38      91
+Waiting:       31   38   3.4     38      91
+Total:         62   84  92.9     75    1156
+
+Percentage of the requests served within a certain time (ms)
+  50%     75
+  66%     78
+  75%     80
+  80%     80
+  90%     82
+  95%     84
+  98%     85
+  99%    118
+ 100%   1156 (longest request)
+
+---- register -----
+
+anter@DESKTOP-RRSF36O:/mnt/c/Users/anter/Desktop/IST/1ºY/1ºS/AGISIT/projeto/Application$ ab -n 1000 -c 10 -p payload.json -T application/json http://35.233.126.7:30843/register
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 35.233.126.7 (be patient)
+Completed 100 requests
+Completed 200 requests
+Completed 300 requests
+Completed 400 requests
+Completed 500 requests
+Completed 600 requests
+Completed 700 requests
+Completed 800 requests
+Completed 900 requests
+Completed 1000 requests
+Finished 1000 requests
+
+
+Server Software:        nginx/1.27.5
+Server Hostname:        35.233.126.7
+Server Port:            30843
+
+Document Path:          /register
+Document Length:        54 bytes
+
+Concurrency Level:      10
+Time taken for tests:   8.898 seconds
+Complete requests:      1000
+Failed requests:        0
+Non-2xx responses:      1000
+Total transferred:      324000 bytes
+Total body sent:        220000
+HTML transferred:       54000 bytes
+Requests per second:    112.38 [#/sec] (mean)
+Time per request:       88.981 [ms] (mean)
+Time per request:       8.898 [ms] (mean, across all concurrent requests)
+Transfer rate:          35.56 [Kbytes/sec] received
+                        24.14 kb/s sent
+                        59.70 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       29   46  93.5     38    1120
+Processing:    31   41   6.7     41     115
+Waiting:       30   41   6.7     40     115
+Total:         60   87  93.7     79    1163
+
+Percentage of the requests served within a certain time (ms)
+  50%     79
+  66%     81
+  75%     82
+  80%     83
+  90%     85
+  95%     90
+  98%    110
+  99%    140
+ 100%   1163 (longest request)
+
+----- messages ------
+
+anter@DESKTOP-RRSF36O:/mnt/c/Users/anter/Desktop/IST/1ºY/1ºS/AGISIT/projeto/Application$ ab -n 1000 -c 10 -p message.json -T "application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc2MTMyOTk5MiwiZXhwIjoxNzYxMzU4NzkyfQ.zQadTZQpCmUfiVUnn3-M53pfaQrlrfz3dI8Tn3juPDE" http://34.14.95.186:31403/messages
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 34.14.95.186 (be patient)
+Completed 100 requests
+Completed 200 requests
+Completed 300 requests
+Completed 400 requests
+Completed 500 requests
+Completed 600 requests
+Completed 700 requests
+Completed 800 requests
+Completed 900 requests
+Completed 1000 requests
+Finished 1000 requests
+
+
+Server Software:
+Server Hostname:        34.14.95.186
+Server Port:            31403
+
+Document Path:          /messages
+Document Length:        192 bytes
+
+Concurrency Level:      10
+Time taken for tests:   22.500 seconds
+Complete requests:      1000
+Failed requests:        920
+   (Connect: 0, Receive: 0, Length: 920, Exceptions: 0)
+Total transferred:      437940 bytes
+Total body sent:        383000
+HTML transferred:       192940 bytes
+Requests per second:    44.44 [#/sec] (mean)
+Time per request:       225.005 [ms] (mean)
+Time per request:       22.500 [ms] (mean, across all concurrent requests)
+Transfer rate:          19.01 [Kbytes/sec] received
+                        16.62 kb/s sent
+                        35.63 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       36   94 128.5     45    1449
+Processing:    51  127 191.2     86    2398
+Waiting:       49  124 191.2     81    2397
+Total:         88  221 259.8    132    2577
+
+Percentage of the requests served within a certain time (ms)
+  50%    132
+  66%    239
+  75%    254
+  80%    277
+  90%    376
+  95%    396
+  98%    904
+  99%   1512
+ 100%   2577 (longest request)
+
+---- contacts ----- com port forwarding
+
+ubuntu@master:~$ ab -n 500 -c 10 -p contact.json -T "application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc2MTMyOTk5MiwiZXhwIjoxNzYxMzU4NzkyfQ.zQadTZQpCmUfiVUnn3-M53pfaQrlrfz3dI8Tn3juPDE" http://127.0.0.1:8083/contacts/
+This is ApacheBench, Version 2.3 <$Revision: 1843412 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 100 requests
+Completed 200 requests
+Completed 300 requests
+Completed 400 requests
+Completed 500 requests
+Finished 500 requests
+
+
+Server Software:
+Server Hostname:        127.0.0.1
+Server Port:            8083
+
+Document Path:          /contacts/
+Document Length:        26 bytes
+
+Concurrency Level:      10
+Time taken for tests:   51.294 seconds
+Complete requests:      500
+Failed requests:        0
+Non-2xx responses:      500
+Total transferred:      136000 bytes
+Total body sent:        169000
+HTML transferred:       13000 bytes
+Requests per second:    9.75 [#/sec] (mean)
+Time per request:       1025.876 [ms] (mean)
+Time per request:       102.588 [ms] (mean, across all concurrent requests)
+Transfer rate:          2.59 [Kbytes/sec] received
+                        3.22 kb/s sent
+                        5.81 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       2
+Processing:  1010 1020  15.7   1016    1126
+Waiting:        8   18  15.6     14     123
+Total:       1010 1020  15.8   1016    1126
+
+Percentage of the requests served within a certain time (ms)
+  50%   1016
+  66%   1018
+  75%   1020
+  80%   1021
+  90%   1026
+  95%   1044
+  98%   1086
+  99%   1102
+ 100%   1126 (longest request)
+
+------ groups ------
+
+ubuntu@master:~$ ab -n 500 -c 10 -p group.json -T "application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc2MTMyOTk5MiwiZXhwIjoxNzYxMzU4NzkyfQ.zQadTZQpCmUfiVUnn3-M53pfaQrlrfz3dI8Tn3juPDE" http://127.0.0.1:8085/groups
+This is ApacheBench, Version 2.3 <$Revision: 1843412 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 100 requests
+Completed 200 requests
+Completed 300 requests
+Completed 400 requests
+Completed 500 requests
+Finished 500 requests
+
+
+Server Software:
+Server Hostname:        127.0.0.1
+Server Port:            8085
+
+Document Path:          /groups
+Document Length:        13 bytes
+
+Concurrency Level:      10
+Time taken for tests:   54.416 seconds
+Complete requests:      500
+Failed requests:        498
+   (Connect: 0, Receive: 0, Length: 498, Exceptions: 0)
+Total transferred:      128906 bytes
+Total body sent:        198000
+HTML transferred:       7406 bytes
+Requests per second:    9.19 [#/sec] (mean)
+Time per request:       1088.321 [ms] (mean)
+Time per request:       108.832 [ms] (mean, across all concurrent requests)
+Transfer rate:          2.31 [Kbytes/sec] received
+                        3.55 kb/s sent
+                        5.87 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       1
+Processing:  1015 1036 117.4   1022    3582
+Waiting:       13   34 117.3     20    2580
+Total:       1015 1036 117.4   1022    3583
+
+Percentage of the requests served within a certain time (ms)
+  50%   1022
+  66%   1026
+  75%   1030
+  80%   1034
+  90%   1054
+  95%   1074
+  98%   1169
+  99%   1179
+ 100%   3583 (longest request)

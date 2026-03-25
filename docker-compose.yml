@@ -1,0 +1,227 @@
+services:
+  # ========================================
+  # DATABASES (one per service)
+  # ========================================
+
+  # Auth Service Database
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: auth_db
+    ports: ["5431:5432"]
+    volumes:
+      - auth-pgdata:/var/lib/postgresql/data
+      - ./db/auth-users/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/auth-users/populate.sql:/docker-entrypoint-initdb.d/02-populate.sql:ro
+
+  # Contacts Service Database
+  contacts-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: contacts_db
+    ports: ["5432:5432"]
+    volumes:
+      - contacts-pgdata:/var/lib/postgresql/data
+      - ./db/contacts/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/contacts/populate.sql:/docker-entrypoint-initdb.d/02-populate.sql:ro
+
+  # Groups Service Database
+  groups-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: groups_db
+    ports: ["5433:5432"]
+    volumes:
+      - groups-pgdata:/var/lib/postgresql/data
+      - ./db/groups/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/groups/populate.sql:/docker-entrypoint-initdb.d/02-populate.sql:ro
+
+  # Messages Service Database
+  messages-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: messages_db
+    ports: ["5434:5432"]
+    volumes:
+      - messages-pgdata:/var/lib/postgresql/data
+      - ./db/messages/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/messages/populate.sql:/docker-entrypoint-initdb.d/02-populate.sql:ro
+
+  # ========================================
+  # PGADMIN (for all databases)
+  # ========================================
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: adminpass
+    ports:
+      - "5050:80"
+    depends_on:
+      - auth-db
+      - contacts-db
+      - groups-db
+      - messages-db
+
+  # ========================================
+  # BACKEND MICROSERVICES
+  # ========================================
+
+  # Auth-Users Service (authentication + user management)
+  auth-users:
+    build:
+      context: ./backend/services
+      dockerfile: auth-users/Dockerfile
+    environment:
+      DB_HOST: auth-db
+      DB_PORT: 5432
+      DB_USER: chat
+      DB_PASSWORD: chatpass
+      DB_NAME: auth_db
+      JWT_SECRET: change_me
+      PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      - auth-db
+
+  # Contacts Service
+  contacts:
+    build:
+      context: ./backend/services
+      dockerfile: contacts/Dockerfile
+    environment:
+      DB_HOST: contacts-db
+      DB_PORT: 5432
+      DB_USER: chat
+      DB_PASSWORD: chatpass
+      DB_NAME: contacts_db
+      JWT_SECRET: change_me
+      AUTH_SERVICE_URL: http://auth-users:8081
+      PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      - contacts-db
+      - auth-users
+
+  # Messages Service
+  messages:
+    build:
+      context: ./backend/services
+      dockerfile: messages/Dockerfile
+    environment:
+      DB_HOST: messages-db
+      DB_PORT: 5432
+      DB_USER: chat
+      DB_PASSWORD: chatpass
+      DB_NAME: messages_db
+      JWT_SECRET: change_me
+      AUTH_SERVICE_URL: http://auth-users:8081
+      CONTACTS_SERVICE_URL: http://contacts:8083
+      GROUPS_SERVICE_URL: http://groups:8085
+      PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      - messages-db
+      - auth-users
+      - groups
+
+  # Groups Service
+  groups:
+    build:
+      context: ./backend/services
+      dockerfile: groups/Dockerfile
+    environment:
+      DB_HOST: groups-db
+      DB_PORT: 5432
+      DB_USER: chat
+      DB_PASSWORD: chatpass
+      DB_NAME: groups_db
+      JWT_SECRET: change_me
+      AUTH_SERVICE_URL: http://auth-users:8081
+      CONTACTS_SERVICE_URL: http://contacts:8083
+      MESSAGES_SERVICE_URL: http://messages:8084
+      PORT: 8085
+    ports:
+      - "8085:8085"
+    depends_on:
+      - groups-db
+      - auth-users
+      - contacts
+
+  # ========================================
+  # FRONTEND
+  # ========================================
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/public:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - auth-users
+      - messages
+      - groups
+      - contacts
+
+  # ========================================
+  # MONITORING SERVICES
+  # ========================================
+  
+  # Prometheus - Time-series database and monitoring system
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      - auth-users
+      - contacts
+      - groups
+      - messages
+
+  # Grafana - Metrics visualization and dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infra/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./infra/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  auth-pgdata:
+  contacts-pgdata:
+  groups-pgdata:
+  messages-pgdata:
+  prometheus-data:
+  grafana-data:

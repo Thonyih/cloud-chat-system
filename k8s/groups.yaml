@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata: { name: groups }
+spec:
+  selector: { app: groups }
+  ports: [{ port: 8085, targetPort: 8085 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: groups }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: groups } }
+  template:
+    metadata: { labels: { app: groups } }
+    spec:
+      containers:
+        - name: groups
+          image: antonioregistry/groups:latest
+          ports: [{ containerPort: 8085 }]
+          env:
+            - { name: DB_HOST, value: "groups-db" }
+            - { name: DB_PORT, value: "5432" }
+            - { name: DB_USER, value: "chat" }
+            - { name: DB_NAME, value: "groups_db" }
+            - name: DB_PASSWORD
+              valueFrom:
+                { secretKeyRef: { name: app-secrets, key: DB_PASSWORD } }
+            - name: JWT_SECRET
+              valueFrom:
+                { secretKeyRef: { name: app-secrets, key: JWT_SECRET } }
+            - { name: AUTH_SERVICE_URL, value: "http://auth-users:8081" }
+            - { name: CONTACTS_SERVICE_URL, value: "http://contacts:8083" }
+            - { name: MESSAGES_SERVICE_URL, value: "http://messages:8084" }
+            - { name: PORT, value: "8085" }

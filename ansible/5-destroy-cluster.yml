@@ -1,0 +1,82 @@
+---
+# Complete cluster destruction playbook
+- name: Delete application deployment first
+  import_playbook: 4-delete-deployment.yml
+
+- name: Reset worker nodes
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Drain worker node
+      shell: kubectl drain {{ inventory_hostname }} --ignore-daemonsets --delete-emptydir-data --force
+      delegate_to: "{{ groups['master'][0] }}"
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete worker node from cluster
+      shell: kubectl delete node {{ inventory_hostname }}
+      delegate_to: "{{ groups['master'][0] }}"
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Reset kubeadm on worker
+      shell: kubeadm reset --force
+      ignore_errors: yes
+
+    - name: Clean up worker files
+      shell: |
+        rm -rf /etc/cni/net.d
+        rm -rf /var/lib/kubelet/*
+        rm -rf /var/lib/etcd
+        rm -rf $HOME/.kube
+      ignore_errors: yes
+
+    - name: Restart containerd on worker
+      systemd:
+        name: containerd
+        state: restarted
+
+- name: Reset master node
+  hosts: master
+  become: yes
+  tasks:
+    - name: Reset kubeadm on master
+      shell: kubeadm reset --force
+      ignore_errors: yes
+
+    - name: Clean up master files
+      shell: |
+        rm -rf /etc/cni/net.d
+        rm -rf /var/lib/kubelet/*
+        rm -rf /var/lib/etcd
+        rm -rf $HOME/.kube
+        rm -rf /home/ubuntu/.kube
+        rm -rf /home/ubuntu/k8s
+        rm -rf /home/ubuntu/sql
+        rm -rf /home/ubuntu/grafana-dashboard.json
+      ignore_errors: yes
+
+    - name: Remove iptables rules
+      shell: |
+        iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+      ignore_errors: yes
+
+    - name: Restart containerd on master
+      systemd:
+        name: containerd
+        state: restarted
+
+    - name: Verify cluster is destroyed
+      shell: kubectl get nodes
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      register: verify_destroy
+      failed_when: false
+      changed_when: false
+
+    - name: Show destruction result
+      debug:
+        msg: "Cluster destroyed successfully"
+      when: verify_destroy.rc != 0

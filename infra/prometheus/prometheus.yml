@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'chat-app-monitor'
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Auth-Users Service - CPU and Memory monitoring
+  - job_name: 'auth-users'
+    static_configs:
+      - targets: ['auth-users:8081']
+    metrics_path: '/metrics'
+
+  # Contacts Service - CPU and Memory monitoring
+  - job_name: 'contacts'
+    static_configs:
+      - targets: ['contacts:8083']
+    metrics_path: '/metrics'
+
+  # Messages Service - CPU and Memory monitoring
+  - job_name: 'messages'
+    static_configs:
+      - targets: ['messages:8084']
+    metrics_path: '/metrics'
+
+  # Groups Service - CPU and Memory monitoring
+  - job_name: 'groups'
+    static_configs:
+      - targets: ['groups:8085']
+    metrics_path: '/metrics'

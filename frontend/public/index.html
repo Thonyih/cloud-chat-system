@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AGISIT Group 60 - Chat</title>
+    <link rel="stylesheet" href="styles.css?v=8" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- AUTH PAGE -->
+      <section id="auth-page" class="auth-page">
+        <div class="card auth-card">
+          <h1>AGISIT Chat</h1>
+          <div class="tabs">
+            <button id="tab-login" class="active">Login</button>
+            <button id="tab-register">Register</button>
+          </div>
+
+          <!-- LOGIN FORM -->
+          <div id="login-form" class="form">
+            <input id="li-username" placeholder="Username" />
+            <input id="li-password" placeholder="Password" type="password" />
+            <div class="actions">
+              <button id="btn-login" class="primary">Login</button>
+            </div>
+            <div id="li-msg" class="msg"></div>
+          </div>
+
+          <!-- REGISTER FORM -->
+          <div id="register-form" class="form hidden">
+            <input id="re-username" placeholder="Username" />
+            <input id="re-phonenumber" placeholder="Phone number" />
+            <input id="re-password" placeholder="Password" type="password" />
+            <div class="actions">
+              <button id="btn-register" class="primary">Create account</button>
+            </div>
+            <div id="re-msg" class="msg"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT PAGE -->
+      <section id="chat-page" class="chat-app hidden">
+        <aside class="left-panel">
+          <div class="profile">
+            <div class="avatar" id="avatar-letter">U</div>
+            <div class="meta">
+              <div class="name" id="user-name">User</div>
+              <div class="small" id="user-phone">Phone</div>
+            </div>
+            <div class="profile-actions">
+              <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+          </div>
+          
+          <!-- New chat/group button -->
+          <button id="btn-new-group" class="secondary">New Chat</button>
+
+          <div id="conversations" class="conversations"></div>
+          <div id="add-contact" class="add-contact">
+            <div class="ac-left">
+              <input id="new-contact-phone" placeholder="Phone number to add" inputmode="numeric" />
+            </div>
+            <div class="ac-right">
+              <button id="btn-add-contact" class="primary" type="button">Add Contact</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Group/Chat creation modal overlay -->
+        <div id="modal-overlay" class="modal-overlay hidden">
+          <div id="group-modal" class="card modal" role="dialog" aria-hidden="true">
+            <h3>Start New Chat</h3>
+            <input id="group-name" placeholder="Group name (optional for 1-on-1)" />
+            <input id="group-search" placeholder="Search contacts" />
+            <div id="group-contacts" class="group-contacts"></div>
+            <div id="group-selected" class="group-selected"></div>
+            <div class="actions">
+              <button id="btn-cancel-group" type="button">Cancel</button>
+              <button id="btn-create-group" class="primary" type="button">Create</button>
+            </div>
+          </div>
+        </div>
+
+        <main class="main-panel">
+          <div id="chat-header" class="chat-header">Select a chat</div>
+          <div id="messages" class="messages"></div>
+          <div class="composer">
+            <input id="msg-input" placeholder="Type a message" />
+            <button id="send-btn" class="primary">Send</button>
+          </div>
+        </main>
+      </section>
+    </div>
+
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script type="module" src="api.js?v=2"></script>
+    <script type="module" src="app.js?v=3"></script>
+  </body>
+</html>

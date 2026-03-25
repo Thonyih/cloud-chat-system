@@ -1,0 +1,18 @@
+---
+# Master playbook to deploy the entire application
+# Run with: ansible-playbook -i inventory.ini deploy-all.yml
+
+- name: Step 0 - Bootstrap and configure server
+  import_playbook: bootstrap.yml
+
+- name: Step 1 - Install Kubernetes
+  import_playbook: 1-k8s-install.yml
+
+- name: Step 2 - Create Kubernetes Cluster
+  import_playbook: 2-create-cluster.yml
+
+- name: Step 2.5 - Join Worker Nodes
+  import_playbook: 2.5-joinWorkers.yml
+
+- name: Step 3 - Deploy Application
+  import_playbook: 3-deploy-app.yml

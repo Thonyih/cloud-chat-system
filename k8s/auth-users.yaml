@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-users
+spec:
+  selector: { app: auth-users }
+  ports: [{ port: 8081, targetPort: 8081 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-users
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: auth-users } }
+  template:
+    metadata: { labels: { app: auth-users } }
+    spec:
+      containers:
+        - name: auth-users
+          image: antonioregistry/auth-users:latest
+          ports: [{ containerPort: 8081 }]
+          env:
+            - { name: DB_HOST, value: "auth-db" }
+            - { name: DB_PORT, value: "5432" }
+            - { name: DB_USER, value: "chat" }
+            - { name: DB_NAME, value: "auth_db" }
+            - name: DB_PASSWORD
+              valueFrom:
+                { secretKeyRef: { name: app-secrets, key: DB_PASSWORD } }
+            - name: JWT_SECRET
+              valueFrom:
+                { secretKeyRef: { name: app-secrets, key: JWT_SECRET } }
+            - { name: PORT, value: "8081" }

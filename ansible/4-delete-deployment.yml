@@ -1,0 +1,100 @@
+---
+# Delete application deployment from Kubernetes
+- name: Delete application deployment
+  hosts: master
+  become: no
+  remote_user: ubuntu
+  
+  tasks:
+    - name: Delete Grafana
+      shell: kubectl delete -f /home/ubuntu/k8s/grafana.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete Prometheus
+      shell: kubectl delete -f /home/ubuntu/k8s/prometheus.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete frontend deployment
+      shell: kubectl delete -f /home/ubuntu/k8s/frontend.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete groups service
+      shell: kubectl delete -f /home/ubuntu/k8s/groups.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete groups database
+      shell: kubectl delete -f /home/ubuntu/k8s/groups-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete messages service
+      shell: kubectl delete -f /home/ubuntu/k8s/messages.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete messages database
+      shell: kubectl delete -f /home/ubuntu/k8s/messages-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete contacts service
+      shell: kubectl delete -f /home/ubuntu/k8s/contacts.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete contacts database
+      shell: kubectl delete -f /home/ubuntu/k8s/contacts-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete auth-users service
+      shell: kubectl delete -f /home/ubuntu/k8s/auth-users.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete auth database
+      shell: kubectl delete -f /home/ubuntu/k8s/auth-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete application secrets
+      shell: kubectl delete secret app-secrets
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Delete configmaps
+      shell: |
+        kubectl delete configmap auth-sql
+        kubectl delete configmap contacts-sql
+        kubectl delete configmap messages-sql
+        kubectl delete configmap groups-sql
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Get remaining pods
+      shell: kubectl get pods
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      register: remaining_pods
+      ignore_errors: yes
+
+    - name: Show remaining pods
+      debug:
+        msg: "{{ remaining_pods.stdout_lines }}"

@@ -1,0 +1,193 @@
+---
+- name: Deploy application to Kubernetes
+  hosts: master
+  become: no
+  
+  vars:
+    k8s_manifests_dir: ../k8s
+    remote_k8s_dir: /home/ubuntu/k8s
+    sql_files_dir: ../db
+    remote_sql_dir: /home/ubuntu/sql
+    app_secrets:
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: chatapp
+      DB_PASSWORD: chatpass
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+
+  tasks:
+    - name: Copy Kubernetes manifests to remote host
+      copy:
+        src: "{{ k8s_manifests_dir }}/"
+        dest: "{{ remote_k8s_dir }}/"
+        owner: ubuntu
+        group: ubuntu
+        mode: 0644
+        directory_mode: 0755
+
+    - name: Copy SQL files to remote host
+      copy:
+        src: "{{ sql_files_dir }}/"
+        dest: "{{ remote_sql_dir }}/"
+        owner: ubuntu
+        group: ubuntu
+        mode: 0644
+        directory_mode: 0755
+
+    - name: Copy Grafana dashboard JSON to remote host
+      copy:
+        src: ../infra/grafana/provisioning/dashboards/microservices-resources.json
+        dest: /home/ubuntu/grafana-dashboard.json
+        owner: ubuntu
+        group: ubuntu
+        mode: 0644
+
+    - name: Install local-path storage provisioner
+      shell: kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      register: storage_result
+      retries: 3
+      delay: 10
+      until: storage_result.rc == 0
+
+    - name: Wait for storage provisioner to be ready
+      shell: kubectl wait --for=condition=ready pod -l app=local-path-provisioner -n local-path-storage --timeout=180s
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      retries: 3
+      delay: 10
+      until: storage_result.rc == 0
+
+    - name: Set local-path as default storage class
+      shell: kubectl patch storageclass local-path -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Create SQL configmaps
+      shell: |
+        kubectl create configmap auth-sql \
+          --from-file={{ remote_sql_dir }}/auth-users/init.sql \
+          --from-file={{ remote_sql_dir }}/auth-users/populate.sql \
+          --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Create contacts SQL configmap
+      shell: kubectl create configmap contacts-sql --from-file={{ remote_sql_dir }}/contacts/ --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Create messages SQL configmap
+      shell: kubectl create configmap messages-sql --from-file={{ remote_sql_dir }}/messages/ --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Create groups SQL configmap
+      shell: kubectl create configmap groups-sql --from-file={{ remote_sql_dir }}/groups/ --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Create Grafana dashboard configmap
+      shell: kubectl create configmap grafana-dashboard --from-file=/home/ubuntu/grafana-dashboard.json --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Create application secrets
+      shell: |
+        kubectl create secret generic app-secrets \
+          --from-literal=POSTGRES_USER={{ app_secrets.POSTGRES_USER }} \
+          --from-literal=POSTGRES_PASSWORD={{ app_secrets.POSTGRES_PASSWORD }} \
+          --from-literal=POSTGRES_DB={{ app_secrets.POSTGRES_DB }} \
+          --from-literal=DB_PASSWORD={{ app_secrets.DB_PASSWORD }} \
+          --from-literal=JWT_SECRET={{ app_secrets.JWT_SECRET }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply auth database deployment
+      shell: kubectl apply -f {{ remote_k8s_dir }}/auth-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Wait for auth-db to be ready
+      shell: kubectl wait --for=condition=available deployment/auth-db --timeout=180s
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      retries: 3
+      delay: 10
+
+    - name: Apply auth-users deployment
+      shell: kubectl apply -f {{ remote_k8s_dir }}/auth-users.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply contacts database
+      shell: kubectl apply -f {{ remote_k8s_dir }}/contacts-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply contacts service
+      shell: kubectl apply -f {{ remote_k8s_dir }}/contacts.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply messages database
+      shell: kubectl apply -f {{ remote_k8s_dir }}/messages-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply messages service
+      shell: kubectl apply -f {{ remote_k8s_dir }}/messages.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply groups database
+      shell: kubectl apply -f {{ remote_k8s_dir }}/groups-db.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply groups service
+      shell: kubectl apply -f {{ remote_k8s_dir }}/groups.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply frontend
+      shell: kubectl apply -f {{ remote_k8s_dir }}/frontend.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply Prometheus
+      shell: kubectl apply -f {{ remote_k8s_dir }}/prometheus.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Apply Grafana
+      shell: kubectl apply -f {{ remote_k8s_dir }}/grafana.yaml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Wait a bit for deployments to start
+      pause:
+        seconds: 30
+
+    - name: Get all pods
+      shell: kubectl get pods -o wide
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      register: all_pods
+
+    - name: Show all pods
+      debug:
+        msg: "{{ all_pods.stdout_lines }}"
+
+    - name: Get all services
+      shell: kubectl get svc
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      register: all_services
+
+    - name: Show all services
+      debug:
+        msg: "{{ all_services.stdout_lines }}"

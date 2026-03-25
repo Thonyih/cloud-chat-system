@@ -1,0 +1,95 @@
+---
+- name: Create Kubernetes cluster
+  hosts: master
+  become: yes
+  become_user: root
+  become_method: sudo
+  
+  tasks:
+    - name: Reset and initialize the cluster
+      shell: sudo kubeadm reset --force && sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --ignore-preflight-errors=NumCPU
+      args:
+        chdir: $HOME
+
+    - name: Create .kube directory
+      file:
+        path: $HOME/.kube
+        state: directory
+        mode: 0755
+
+    - name: Copy admin.conf to user's kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: $HOME/.kube/config
+        remote_src: yes
+
+    - name: Create .kube directory for ubuntu user
+      file:
+        path: /home/ubuntu/.kube
+        state: directory
+        mode: 0755
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Copy admin.conf to ubuntu user's kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/ubuntu/.kube/config
+        remote_src: yes
+        owner: ubuntu
+        group: ubuntu
+        mode: 0600
+
+    - name: Install Calico Pod network
+      become: no
+      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+      args:
+        chdir: $HOME
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+    - name: Wait for Calico to be ready
+      become: no
+      shell: kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=300s
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      register: calico_ready
+      retries: 5
+      delay: 30
+      until: calico_ready.rc == 0
+
+    - name: Check API server logs for crashes
+      shell: |
+        POD_ID=$(crictl pods --namespace kube-system --name kube-apiserver -q | head -1)
+        if [ -n "$POD_ID" ]; then
+          CONTAINER_ID=$(crictl ps -a --pod $POD_ID -q | head -1)
+          if [ -n "$CONTAINER_ID" ]; then
+            crictl logs --tail 200 $CONTAINER_ID 2>&1
+          fi
+        fi
+      register: apiserver_crash_logs
+      changed_when: false
+      failed_when: false
+
+    - name: Show API server crash logs
+      debug:
+        var: apiserver_crash_logs.stdout_lines
+      when: apiserver_crash_logs.stdout_lines is defined
+
+    - name: Allow workloads on control plane node
+      become: no
+      shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      ignore_errors: yes
+
+    - name: Get cluster info
+      become: no
+      shell: kubectl get nodes
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+      register: cluster_nodes
+
+    - name: Show cluster nodes
+      debug:
+        msg: "{{ cluster_nodes.stdout_lines }}"
