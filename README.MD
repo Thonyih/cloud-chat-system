@@ -1,6 +1,6 @@
-# 
 
-![Main Diagram.png](/Users/antoniopalma/Documents/temp/cloud-chat-system/Main%20Diagram.png)
+
+![Main Diagram](Main%20Diagram.png)
 
 
 
